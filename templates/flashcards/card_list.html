@@ -1,0 +1,74 @@
+<!-- templates/flashcards/card_list.html -->
+
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flashcards</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
+<body>
+
+    <div class="container mt-5">
+        <h1 class="text-center mb-4">Flashcards</h1>
+
+        {% for card in cards %}
+        <div class="flashcard">
+            <p class="question" onclick="speak('{{ card.question }}', '')">
+                {{ card.question }}
+                <button class="read-aloud-button">質問を読み上げる</button>
+            </p>
+            <p class="answer" style="display: none;">
+                Answer: {{ card.answer }}
+                <button class="read-aloud-button" onclick="speak('{{ card.answer }}', '')">回答を読み上げる</button>
+            </p>
+        </div>
+        {% endfor %}
+    </div>
+
+    <script src="{% static 'js/script.js' %}"></script>
+    <script>
+        function speak(text, language) {
+            var utterance = new SpeechSynthesisUtterance(text);
+            if (language) {
+                utterance.lang = language;
+            }
+            window.speechSynthesis.speak(utterance);
+        }
+
+        // クリック時に回答を表示/非表示と読み上げボタンの切り替えを行う
+        document.addEventListener('DOMContentLoaded', function() {
+            var recognition = new webkitSpeechRecognition() || new SpeechRecognition();
+            var flashcards = document.querySelectorAll('.flashcard');
+
+            flashcards.forEach(function(flashcard) {
+                var questionElement = flashcard.querySelector('.question');
+                var answerElement = flashcard.querySelector('.answer');
+                var readAloudButtons = flashcard.querySelectorAll('.read-aloud-button');
+
+                questionElement.addEventListener('click', function() {
+                    answerElement.style.display = 'block';
+
+                    recognition.onresult = function(event) {
+                        var language = event.results[0][0].lang;
+                        speak(questionElement.textContent, language);
+                        recognition.stop();
+                    };
+
+                    recognition.start();
+                });
+
+                answerElement.addEventListener('click', function() {
+                    readAloudButtons.forEach(function(button) {
+                        button.textContent = '回答を読み上げる';
+                    });
+                });
+            });
+        });
+    </script>
+
+</body>
+</html>
